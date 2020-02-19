@@ -1,0 +1,35 @@
+.Button {
+  margin: 20px;
+  padding: 8px 8px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: #e6e6e6;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 9px #999;
+  float: right;
+  width: 110px;
+}
+
+.Button:hover {
+  background-color: #474b47;
+}
+
+.Button:active {
+  background-color: #3e8e41;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+.Success {
+  color: #102e92;
+}
+
+.Danger {
+  color: #944317;
+}
