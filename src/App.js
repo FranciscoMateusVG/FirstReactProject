@@ -1,6 +1,6 @@
 import React from 'react';
-import Aux from './hof/Auxiliar';
-import Layout from './components/Layout/Layout';
+import Aux from './hof/Aux/Auxiliar';
+import Layout from './hof/Layout/Layout';
 import Acoes from './containers/Acoes';
 
 function App() {

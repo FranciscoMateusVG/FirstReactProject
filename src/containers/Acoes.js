@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import Tabela from '../components/UI/Tabela/Tabela';
 import Modal from '../components/UI/Modal/Modal';
 import axios from 'axios';
-import Aux from '../hof/Auxiliar';
+import Aux from '../hof/Aux/Auxiliar';
 import classes from './Acoes.module.css';
-import NovaAcao from '../components/NovaAcao/NovaAcao';
+import NovaAcao from '../components/ModalNovaAcao/NovaAcao';
 
 class Acoes extends Component {
   state = {
@@ -30,7 +30,7 @@ class Acoes extends Component {
   render() {
     return (
       <Aux>
-        <Modal show={this.state.novaAcao} click={this.cancelaNovaAcaoHandler}>
+        <Modal header='Nova Ação' show={this.state.novaAcao} clicked={this.cancelaNovaAcaoHandler}>
           <NovaAcao click={this.cancelaNovaAcaoHandler} />
         </Modal>
         <Tabela colunas={this.state.colunas} data={this.state.acoes} />

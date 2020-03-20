@@ -1,50 +1,50 @@
 import React from 'react';
-import Aux from '../../hof/Auxiliar';
-import Button from '../../components/UI/Button/Button';
+import Aux from '../../hof/Aux/Auxiliar';
+import Button from '../UI/Button/Button';
+import Input from '../UI/Input/Input'
 
 const NovaAcao = props => {
   return (
     <Aux>
-      <h3>Nova Açao</h3>
       <form>
-        <div>
-          <label>Nome</label>
-          <input
+        <Input 
+            label='Nome'
             type="text"
-            name=""
+            name="nome"
             id="nomeAcao"
             placeholder="Nome da Açao"
             aria-describedby="helpId"
           />
-        </div>
-        <div>
-          <label>Código</label>
-          <input
+
+        <Input 
+            label='Código'
             type="text"
-            name=""
+            name="codigo"
             id="codigoAcao"
             placeholder="Codigo da Açao"
             aria-describedby="helpId"
           />
-        </div>
-        <div>
-          <label>Setor</label>
-          <input
+        <Input 
+            label='Setor'
             type="text"
-            name=""
+            name="setor"
             id="setorAcao"
             placeholder="Setor da Açao"
             aria-describedby="helpId"
           />
-        </div>
-        <div>
-          <label>Tipo</label>
-          <select name="tipoAcao" id="tipoAcao">
-            <option>Açao</option>
-            <option>Fundo Imobiliario</option>
-          </select>
-        </div>
+       
+        <Input
+          inputtype='select'
+          label='Tipo'
+          options={['Ação', 'Fundo Imobiliário']}
+          name="tipoAcao"
+          id="tipoAcao" />
+ 
       </form>
+
+
+
+
       <Button btnType="Success" clicked={props.click}>
         Cancelar
       </Button>
