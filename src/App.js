@@ -1,16 +1,16 @@
 import React from 'react';
 import Aux from './hof/Aux/Auxiliar';
 import Layout from './hof/Layout/Layout';
-import Acoes from './containers/Acoes';
+import Home from './containers/Home/Home';
 
 function App() {
-  return (
-    <Aux>
-      <Layout>
-        <Acoes />
-      </Layout>
-    </Aux>
-  );
+	return (
+		<Aux>
+			<Layout>
+				<Home />
+			</Layout>
+		</Aux>
+	);
 }
 
 export default App;
