@@ -7,7 +7,7 @@ const Navigationitens = () => (
 		<Navigationitem link='/' active>
 			Home
 		</Navigationitem>
-		<Navigationitem link='/'> Modo Analista</Navigationitem>
+		<Navigationitem link='/modoanalista'> Modo Analista</Navigationitem>
 	</ul>
 );
 

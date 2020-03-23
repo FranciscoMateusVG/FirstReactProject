@@ -1,0 +1,26 @@
+.Modal {
+	height: 300px;
+}
+
+.Caixa {
+	text-align: right;
+	padding-top: 20px;
+	height: 50px;
+}
+
+.Form {
+	display: flex;
+	flex-flow: row wrap;
+	align-items: left;
+	text-align: left;
+	padding-top: 30px;
+}
+
+.IconeBox {
+	padding: 32px 0px 0px 40px;
+	display: inline-block;
+}
+
+.Icone {
+	color: #10d130;
+}

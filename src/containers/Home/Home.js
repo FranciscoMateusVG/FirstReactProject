@@ -4,28 +4,42 @@ import Modal from '../../components/UI/Modal/Modal';
 import axios from 'axios';
 import Aux from '../../hof/Aux/Auxiliar';
 import classes from './Home.module.css';
-import NovaAcao from '../../components/ModalNovaAcao/NovaAcao';
+import NovaAcao from '../../containers/ModalNovaAcao/NovaAcao';
+import AnaliseAcao from '../../containers/ModalAnaliseAcao/AnaliseAcao';
 
 class Home extends Component {
 	state = {
-		acoes: [],
+		dados: [],
 		colunas: ['Código', 'Tipo', 'Setor', 'Distribuiçao', 'Investido'],
-		novaAcao: false
+		novaAcao: false,
+		html: ''
 	};
 
 	async componentDidMount() {
-		let acoes = await axios.get('http://localhost:8080/acoes');
+		let acoes = await axios.get('/acoes');
 		let data = this.geraDadosTabela(acoes.data.acoes);
 
-		this.setState(prevState => (prevState.acoes = data));
+		this.setState(prevState => (prevState.dados = data));
 	}
+
+	clickFecha = () => {
+		this.setState({ novaAcao: false });
+	};
 
 	novaAcaoHandler = () => {
 		this.setState({ novaAcao: true });
 	};
 
-	cancelaNovaAcaoHandler = () => {
-		this.setState({ novaAcao: false });
+	abreModalAnaliseAcao = event => {
+		let nomeAcao = event.target.getAttribute('data');
+		//console.log(event.target.getAttribute('data'));
+
+		this.setState(
+			prevState =>
+				(prevState.html = (
+					<AnaliseAcao nomeAcao={nomeAcao} show={true}></AnaliseAcao>
+				))
+		);
 	};
 
 	geraDadosTabela = data => {
@@ -65,10 +79,17 @@ class Home extends Component {
 				<Modal
 					header='Nova Ação'
 					show={this.state.novaAcao}
-					clicked={this.cancelaNovaAcaoHandler}>
-					<NovaAcao click={this.cancelaNovaAcaoHandler} />
+					clicked={this.clickFecha}>
+					<NovaAcao />
 				</Modal>
-				<Tabela colunas={this.state.colunas} data={this.state.acoes} />
+
+				<Tabela
+					colunas={this.state.colunas}
+					data={this.state.dados}
+					clicked={this.abreModalAnaliseAcao}
+				/>
+
+				{this.state.html}
 				<div className={classes.Teste}>
 					<button className={classes.NovaAcao} onClick={this.novaAcaoHandler}>
 						Nova Açao

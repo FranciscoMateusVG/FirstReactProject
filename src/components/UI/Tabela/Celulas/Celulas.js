@@ -1,6 +1,5 @@
 import React from 'react';
 import Classes from './Celulas.module.css';
-//import Aux from '../../../hof/Auxiliar';
 
 const Celulas = props => {
 	let celulas = null;
@@ -10,13 +9,17 @@ const Celulas = props => {
 		celulas = props.data.map((value, index) => {
 			let campos = value.map((valueArr, index) => {
 				return (
-					<td className={Classes.Cell} key={index}>
+					<td className={Classes.Cell} data={value[0]} key={index}>
 						{valueArr}
 					</td>
 				);
 			});
 
-			return <tr key={index}>{campos}</tr>;
+			return (
+				<tr key={index} onClick={props.clicked}>
+					{campos}
+				</tr>
+			);
 		});
 	}
 
