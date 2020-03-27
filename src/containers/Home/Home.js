@@ -6,21 +6,35 @@ import Aux from '../../hof/Aux/Auxiliar';
 import classes from './Home.module.css';
 import NovaAcao from '../../containers/ModalNovaAcao/NovaAcao';
 import AnaliseAcao from '../../containers/ModalAnaliseAcao/AnaliseAcao';
+import Coluna from '../../components/ObjectsConstructors/Coluna';
 
 class Home extends Component {
 	state = {
 		dados: [],
 		colunas: ['Código', 'Tipo', 'Setor', 'Distribuiçao', 'Investido'],
 		novaAcao: false,
-		html: ''
+		html: '',
+		tabela: []
 	};
 
 	async componentDidMount() {
-		let acoes = await axios.get('/acoes');
-		let data = this.geraDadosTabela(acoes.data.acoes);
+		let data = await this.buscaAcoes();
 
 		this.setState(prevState => (prevState.dados = data));
+
+		console.log(this.state.tabela);
 	}
+
+	buscaAcoes = async () => {
+		let acoes = await axios.get('/acoes');
+		return this.geraDadosTabela(acoes.data.acoes);
+	};
+
+	atualizaTabela = async () => {
+		let data = await this.buscaAcoes();
+
+		this.setState(prevState => (prevState.dados = data));
+	};
 
 	clickFecha = () => {
 		this.setState({ novaAcao: false });
@@ -37,29 +51,48 @@ class Home extends Component {
 		this.setState(
 			prevState =>
 				(prevState.html = (
-					<AnaliseAcao nomeAcao={nomeAcao} show={true}></AnaliseAcao>
+					<AnaliseAcao
+						nomeAcao={nomeAcao}
+						atualizaTabelaPai={this.atualizaTabela}
+						show={true}></AnaliseAcao>
 				))
 		);
 	};
 
 	geraDadosTabela = data => {
+		/////////////////////////////////////////
+		/*Pega as colunas*/
+		let arr2 = [];
+		this.state.colunas.forEach(element => {
+			arr2.push(new Coluna(element, 'NORMAL'));
+		});
+
+		////////////////////////////////////////
+
 		//Calcula o total
 		let total = data.reduce((acc, cV, index) => {
 			if (index === 1) {
-				acc = acc.Investido.qntTotal;
+				acc = acc.Investido.vlrTotal;
 			}
 
-			return acc + cV.Investido.qntTotal;
+			return acc + cV.Investido.vlrTotal;
 		});
 
 		//Empura os valores do Objeto em Array
-		let arr = data.map(value => {
-			let distribuicao = Math.round((value.Investido.qntTotal / total) * 100);
+		let arr = data.map((value, index) => {
+			let distribuicao = Math.round((value.Investido.vlrTotal / total) * 100);
 			let formatter = new Intl.NumberFormat('pt-BR', {
 				style: 'currency',
 				currency: 'BRL'
 			});
 			let investido = formatter.format(value.Investido.vlrTotal);
+
+			let key = index + 1;
+			arr2[0][key] = value.Codigo;
+			arr2[1][key] = value.Tipo;
+			arr2[2][key] = value.Setor;
+			arr2[3][key] = `${distribuicao} %`;
+			arr2[4][key] = investido;
 
 			return [
 				value.Codigo,
@@ -69,6 +102,8 @@ class Home extends Component {
 				investido
 			];
 		});
+
+		this.setState({ tabela: arr2 });
 
 		return arr;
 	};

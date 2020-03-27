@@ -21,7 +21,8 @@ class AnaliseAcao extends Component {
 		modal: false,
 		Data: '',
 		Quantidade: '',
-		PrecoDaCompra: ''
+		PrecoDaCompra: '',
+		atualiza: ''
 	};
 
 	async componentDidMount() {
@@ -58,14 +59,53 @@ class AnaliseAcao extends Component {
 			let valorDeCompra = value.quantidade * value.preco;
 			let data = value.data.slice(0, 10).split('-');
 			data = `${data[2]} / ${data[1]} / ${data[0]}`;
-			return [data, value.quantidade, value.preco, valorDeCompra];
+			return [
+				data,
+				parseInt(value.quantidade),
+				parseFloat(value.preco),
+				valorDeCompra
+			];
 		});
 
 		return arr;
 	};
 
-	adicionaAcao = () => {
-		console.log('Aqui');
+	adicionaAcao = async () => {
+		let data = this.state.Data,
+			quantidade = this.state.Quantidade,
+			precoDaCompra = this.state.PrecoDaCompra;
+
+		if (data && quantidade && precoDaCompra) {
+			precoDaCompra = precoDaCompra.replace(',', '.');
+			data = data + 'T00:00:00.000Z';
+
+			let obj = {
+				data: data,
+				quantidade: quantidade,
+				preco: precoDaCompra
+			};
+
+			let settings = {
+				url: `/acoes/${this.state.nomeAcao}`,
+				method: 'PUT',
+				timeout: 0,
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				data: JSON.stringify(obj)
+			};
+
+			try {
+				await axios(settings);
+
+				this.setState({
+					dados: this.state.dados.concat(this.geraDadosTabela([obj]))
+				});
+				this.props.atualizaTabelaPai();
+			} catch (error) {
+				console.log(error);
+			}
+		} else alert('PREENCHA TODOS OS CAMPOS');
 	};
 
 	render() {

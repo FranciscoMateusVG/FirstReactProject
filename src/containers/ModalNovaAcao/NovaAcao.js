@@ -19,7 +19,7 @@ class NovaAcao extends Component {
 	};
 
 	clickSalva = async () => {
-		var settings = {
+		let settings = {
 			url: '/acoes',
 			method: 'POST',
 			timeout: 0,
@@ -30,8 +30,7 @@ class NovaAcao extends Component {
 		};
 
 		try {
-			let testim = await axios(settings);
-			console.log(testim);
+			await axios(settings);
 		} catch (error) {
 			console.log(error);
 		}
