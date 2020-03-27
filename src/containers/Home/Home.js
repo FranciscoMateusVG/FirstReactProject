@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import Tabela from '../../components/UI/Tabela/Tabela';
 import Modal from '../../components/UI/Modal/Modal';
 import axios from 'axios';
@@ -7,22 +8,20 @@ import classes from './Home.module.css';
 import NovaAcao from '../../containers/ModalNovaAcao/NovaAcao';
 import AnaliseAcao from '../../containers/ModalAnaliseAcao/AnaliseAcao';
 import Coluna from '../../components/ObjectsConstructors/Coluna';
+import Celula from '../../components/ObjectsConstructors/Cell';
+import * as actionTypes from '../../store/actions';
 
 class Home extends Component {
 	state = {
-		dados: [],
 		colunas: ['Código', 'Tipo', 'Setor', 'Distribuiçao', 'Investido'],
 		novaAcao: false,
-		html: '',
-		tabela: []
+		html: ''
 	};
 
 	async componentDidMount() {
 		let data = await this.buscaAcoes();
 
-		this.setState(prevState => (prevState.dados = data));
-
-		console.log(this.state.tabela);
+		this.props.onDadosAdded(data);
 	}
 
 	buscaAcoes = async () => {
@@ -33,7 +32,8 @@ class Home extends Component {
 	atualizaTabela = async () => {
 		let data = await this.buscaAcoes();
 
-		this.setState(prevState => (prevState.dados = data));
+		this.props.onDadosAdded(data);
+		console.log('aqui');
 	};
 
 	clickFecha = () => {
@@ -79,6 +79,7 @@ class Home extends Component {
 		});
 
 		//Empura os valores do Objeto em Array
+		//BODY
 		let arr = data.map((value, index) => {
 			let distribuicao = Math.round((value.Investido.vlrTotal / total) * 100);
 			let formatter = new Intl.NumberFormat('pt-BR', {
@@ -88,11 +89,11 @@ class Home extends Component {
 			let investido = formatter.format(value.Investido.vlrTotal);
 
 			let key = index + 1;
-			arr2[0][key] = value.Codigo;
-			arr2[1][key] = value.Tipo;
-			arr2[2][key] = value.Setor;
-			arr2[3][key] = `${distribuicao} %`;
-			arr2[4][key] = investido;
+			arr2[0][key] = new Celula( value.Codigo,null)
+			arr2[1][key] = new Celula(value.Tip,null)
+			arr2[2][key] = new Celula(value.Setor,null)
+			arr2[3][key] = new Celula(`${distribuicao} %`,null)
+			arr2[4][key] = new Celula(investido,null)
 
 			return [
 				value.Codigo,
@@ -102,8 +103,10 @@ class Home extends Component {
 				investido
 			];
 		});
+		//O FOOTER FICA AQUI MATEUS NÃO SE ESQUECÃ
 
-		this.setState({ tabela: arr2 });
+		this.props.onTabelaAdded(arr2);
+		console.log(this.props.tabela);
 
 		return arr;
 	};
@@ -117,13 +120,11 @@ class Home extends Component {
 					clicked={this.clickFecha}>
 					<NovaAcao />
 				</Modal>
-
 				<Tabela
 					colunas={this.state.colunas}
-					data={this.state.dados}
+					data={this.props.dados}
 					clicked={this.abreModalAnaliseAcao}
 				/>
-
 				{this.state.html}
 				<div className={classes.Teste}>
 					<button className={classes.NovaAcao} onClick={this.novaAcaoHandler}>
@@ -135,4 +136,22 @@ class Home extends Component {
 	}
 }
 
-export default Home;
+const mapStateToProps = state => {
+	return {
+		dados: state.dados,
+		tabela: state.tabela
+	};
+};
+
+const mapDispatchToProps = dispatch => {
+	return {
+		onDadosAdded: dados => {
+			dispatch({ type: actionTypes.ADD_DADOS, dados: dados });
+		},
+		onTabelaAdded: tabela => {
+			dispatch({ type: actionTypes.ADD_TABELA, tabela: tabela });
+		}
+	};
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home);
