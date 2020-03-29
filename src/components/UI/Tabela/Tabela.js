@@ -10,7 +10,7 @@ const Tabela = props => {
 		<Aux>
 			<table className={classes.Tabela}>
 				<Colunas colunas={props.colunas} />
-				<Celulas data={props.data} clicked={props.clicked} />
+				<Celulas data={props.data} clicked={props.clicked} icone={props.icone} />
 			</table>
 		</Aux>
 	);

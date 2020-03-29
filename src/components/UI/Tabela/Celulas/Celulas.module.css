@@ -1,9 +1,28 @@
 .Cell {
-  border: 1px solid black;
-  padding: 10px;
-  text-align: left;
+	border: 1px solid black;
+	padding: 10px;
+	text-align: left;
+}
+.Icone {
+	opacity: 0;
+	text-align: center;
+	width: 20px;
+	height: 19px;
+	padding: 10px;
+	background-color: white;
+}
+
+.IconeDiv {
+	background-color: white;
+}
+
+tr:hover .Icone {
+	opacity: 1;
+	border: 1px solid black;
+	text-align: center;
+	background-color: #c01919d2;
 }
 
 tr:nth-child(even) {
-  background-color: #f2f2f2;
+	background-color: #dfcccc80;
 }

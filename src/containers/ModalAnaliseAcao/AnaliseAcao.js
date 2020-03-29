@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-
+import { connect } from 'react-redux';
 import Tabela from '../../components/UI/Tabela/Tabela';
 import Modal from '../../components/UI/Modal/Modal';
 import axios from 'axios';
@@ -7,6 +7,9 @@ import Input from '../../components/UI/Input/Input';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import classes from './AnaliseAcao.module.css';
+import Coluna from '../../components/ObjectsConstructors/Coluna';
+import Celula from '../../components/ObjectsConstructors/Cell';
+import * as actionTypes from '../../store/actions';
 
 class AnaliseAcao extends Component {
 	state = {
@@ -27,20 +30,23 @@ class AnaliseAcao extends Component {
 
 	async componentDidMount() {
 		let acao = await axios.get(`/acoes/${this.state.nomeAcao}`);
-		let dados = this.geraDadosTabela(acao.data.Data);
-
-		this.setState(prevState => (prevState.dados = dados));
+		let tabela = this.geraDadosTabela(acao.data.Data);
 		this.setState({ modal: true });
+		this.props.onTabelaAdded(tabela);
 	}
 
 	async componentDidUpdate(prevProps, prevState) {
 		let acao = await axios.get(`/acoes/${this.state.nomeAcao}`);
-		let dados = this.geraDadosTabela(acao.data.Data);
 
 		if (prevState.modal === false) {
-			this.setState(prevState => (prevState.dados = dados));
-			this.setState({ nomeAcao: this.props.nomeAcao });
-			this.setState({ modal: true });
+			let tabela = this.geraDadosTabela(acao.data.Data);
+
+			this.setState({
+				nomeAcao: this.props.nomeAcao,
+				modal: true
+			});
+
+			this.props.onTabelaAdded(tabela);
 		}
 	}
 
@@ -55,19 +61,34 @@ class AnaliseAcao extends Component {
 	};
 
 	geraDadosTabela = data => {
-		let arr = data.map(value => {
+		/////////////////////////////////////////
+		/*Pega as colunas*/
+		let arr2 = [];
+		this.state.colunas.forEach(element => {
+			arr2.push(new Coluna(element, { tipo: 'Normal' }));
+		});
+
+		////////////////////////////////////////
+
+		//Empura os valores do Objeto em Array
+		//BODY
+		data.forEach((value, index) => {
 			let valorDeCompra = value.quantidade * value.preco;
 			let data = value.data.slice(0, 10).split('-');
 			data = `${data[2]} / ${data[1]} / ${data[0]}`;
-			return [
-				data,
-				parseInt(value.quantidade),
-				parseFloat(value.preco),
-				valorDeCompra
-			];
+
+			let key = index + 1;
+			arr2[0][key] = new Celula(data, null);
+			arr2[1][key] = new Celula(parseInt(value.quantidade), null);
+			arr2[2][key] = new Celula(parseFloat(value.preco), null);
+			arr2[3][key] = new Celula(valorDeCompra, null);
 		});
 
-		return arr;
+		//O FOOTER FICA AQUI MATEUS NÃO SE ESQUECÃ
+
+		return arr2;
+
+		//		this.props.onTabelaAdded(arr2);
 	};
 
 	adicionaAcao = async () => {
@@ -115,7 +136,9 @@ class AnaliseAcao extends Component {
 				show={this.state.modal}
 				clicked={this.clickFecha}>
 				<div className={classes.Modal}>
-					<Tabela colunas={this.state.colunas} data={this.state.dados}></Tabela>
+					<Tabela
+						colunas={this.props.tabelaAnaliseAcao}
+						data={this.props.tabelaAnaliseAcao}></Tabela>
 					<div className={classes.Caixa} id='div-caixa'>
 						<form className={classes.Form}>
 							<Input
@@ -164,4 +187,19 @@ class AnaliseAcao extends Component {
 	}
 }
 
-export default AnaliseAcao;
+const mapStateToProps = state => {
+	return {
+		tabelaAnaliseAcao: state.tabelaAnaliseAcao,
+		tabelaHome: state.tabelaHome
+	};
+};
+
+const mapDispatchToProps = dispatch => {
+	return {
+		onTabelaAdded: tabela => {
+			dispatch({ type: actionTypes.ADD_TABELA_ANALISEACAO, tabela: tabela });
+		}
+	};
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(AnaliseAcao);

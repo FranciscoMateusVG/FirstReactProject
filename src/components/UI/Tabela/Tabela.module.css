@@ -1,6 +1,5 @@
 .Tabela {
-  border: 1px solid black;
-  width: 90%;
-  border-collapse: collapse;
-  margin: auto;
+	width: 90%;
+	border-collapse: collapse;
+	margin: auto;
 }

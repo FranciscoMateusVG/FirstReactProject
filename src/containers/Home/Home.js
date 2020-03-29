@@ -21,19 +21,28 @@ class Home extends Component {
 	async componentDidMount() {
 		let data = await this.buscaAcoes();
 
-		this.props.onDadosAdded(data);
+		if (!this.props.dados[0]) {
+			this.props.onDadosAdded(data.data.acoes);
+		}
 	}
-
+	handleIcon = event => {
+		let valor = event.currentTarget.getAttribute('data-codigo');
+		console.log(valor);
+	};
 	buscaAcoes = async () => {
-		let acoes = await axios.get('/acoes');
-		return this.geraDadosTabela(acoes.data.acoes);
+		if (!this.props.dados[0]) {
+			let acoes = await axios.get('/acoes');
+			this.geraDadosTabela(acoes.data.acoes);
+			return acoes;
+		} else {
+			return this.props.dados;
+		}
 	};
 
 	atualizaTabela = async () => {
 		let data = await this.buscaAcoes();
 
 		this.props.onDadosAdded(data);
-		console.log('aqui');
 	};
 
 	clickFecha = () => {
@@ -45,26 +54,33 @@ class Home extends Component {
 	};
 
 	abreModalAnaliseAcao = event => {
-		let nomeAcao = event.target.getAttribute('data');
-		//console.log(event.target.getAttribute('data'));
+		let nomeAcao = event.target.getAttribute('data-codigo');
+		console.log(nomeAcao);
 
-		this.setState(
-			prevState =>
-				(prevState.html = (
-					<AnaliseAcao
-						nomeAcao={nomeAcao}
-						atualizaTabelaPai={this.atualizaTabela}
-						show={true}></AnaliseAcao>
-				))
-		);
+		if (nomeAcao !== 'TOTAL') {
+			this.setState(
+				prevState =>
+					(prevState.html = (
+						<AnaliseAcao
+							nomeAcao={nomeAcao}
+							atualizaTabelaPai={this.atualizaTabela}
+							show={true}></AnaliseAcao>
+					))
+			);
+		}
 	};
 
 	geraDadosTabela = data => {
+		let formatter = new Intl.NumberFormat('pt-BR', {
+			style: 'currency',
+			currency: 'BRL'
+		});
 		/////////////////////////////////////////
 		/*Pega as colunas*/
 		let arr2 = [];
+		let totalInvestido = 0;
 		this.state.colunas.forEach(element => {
-			arr2.push(new Coluna(element, 'NORMAL'));
+			arr2.push(new Coluna(element, { tipo: 'Normal' }));
 		});
 
 		////////////////////////////////////////
@@ -80,35 +96,40 @@ class Home extends Component {
 
 		//Empura os valores do Objeto em Array
 		//BODY
-		let arr = data.map((value, index) => {
+		data.forEach((value, index) => {
 			let distribuicao = Math.round((value.Investido.vlrTotal / total) * 100);
-			let formatter = new Intl.NumberFormat('pt-BR', {
-				style: 'currency',
-				currency: 'BRL'
-			});
-			let investido = formatter.format(value.Investido.vlrTotal);
+
+			let investido = value.Investido.vlrTotal;
 
 			let key = index + 1;
-			arr2[0][key] = new Celula( value.Codigo,null)
-			arr2[1][key] = new Celula(value.Tip,null)
-			arr2[2][key] = new Celula(value.Setor,null)
-			arr2[3][key] = new Celula(`${distribuicao} %`,null)
-			arr2[4][key] = new Celula(investido,null)
+			arr2[0][key] = new Celula(value.Codigo, null);
+			arr2[1][key] = new Celula(value.Tipo, null);
+			arr2[2][key] = new Celula(value.Setor, null);
+			arr2[3][key] = new Celula(`${distribuicao} %`, null);
+			arr2[4][key] = new Celula(formatter.format(investido), null);
 
-			return [
-				value.Codigo,
-				value.Tipo,
-				value.Setor,
-				`${distribuicao} %`,
-				investido
-			];
+			totalInvestido += investido;
 		});
+
 		//O FOOTER FICA AQUI MATEUS NÃO SE ESQUECÃ
 
-		this.props.onTabelaAdded(arr2);
-		console.log(this.props.tabela);
+		let key = Object.keys(arr2[0]).length - 1;
 
-		return arr;
+		arr2[0][key] = new Celula('TOTAL', {
+			backgroundColor: 'black',
+			color: 'white'
+		});
+		arr2[1][key] = new Celula('', { backgroundColor: 'black' });
+		arr2[2][key] = new Celula('', { backgroundColor: 'black' });
+		arr2[3][key] = new Celula('', { backgroundColor: 'black' });
+		arr2[4][key] = new Celula(formatter.format(totalInvestido), {
+			backgroundColor: 'black',
+			color: 'white'
+		});
+
+		//////////////////////////////////////////////
+
+		this.props.onTabelaAdded(arr2);
 	};
 
 	render() {
@@ -121,9 +142,10 @@ class Home extends Component {
 					<NovaAcao />
 				</Modal>
 				<Tabela
-					colunas={this.state.colunas}
-					data={this.props.dados}
+					colunas={this.props.tabela}
+					data={this.props.tabela}
 					clicked={this.abreModalAnaliseAcao}
+					icone={event => this.handleIcon(event)}
 				/>
 				{this.state.html}
 				<div className={classes.Teste}>
@@ -139,7 +161,7 @@ class Home extends Component {
 const mapStateToProps = state => {
 	return {
 		dados: state.dados,
-		tabela: state.tabela
+		tabela: state.tabelaHome
 	};
 };
 
@@ -149,7 +171,7 @@ const mapDispatchToProps = dispatch => {
 			dispatch({ type: actionTypes.ADD_DADOS, dados: dados });
 		},
 		onTabelaAdded: tabela => {
-			dispatch({ type: actionTypes.ADD_TABELA, tabela: tabela });
+			dispatch({ type: actionTypes.ADD_TABELA_HOME, tabela: tabela });
 		}
 	};
 };
