@@ -9,12 +9,13 @@ const initialState = {
 
 const reducer = (state = initialState, action) => {
 	switch (action.type) {
+		//Adiciona Dados
 		case actionTypes.ADD_DADOS:
 			return {
 				...state,
 				dados: action.dados
 			};
-
+		//Adiciona nas respectivas tabelas
 		case actionTypes.ADD_TABELA_HOME:
 			return {
 				...state,
@@ -30,6 +31,7 @@ const reducer = (state = initialState, action) => {
 				...state,
 				tabelaModoAnalista: action.tabela
 			};
+
 		default:
 			return state;
 	}

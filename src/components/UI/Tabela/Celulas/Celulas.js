@@ -81,7 +81,7 @@ const Celulas = props => {
 					<td
 						key={Math.random}
 						className={Classes.IconeDiv}
-						data-codigo='Icone'
+						data-codigo={codigo}
 						onClick={props.icone}>
 						<FontAwesomeIcon
 							className={Classes.Icone}

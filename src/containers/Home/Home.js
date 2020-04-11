@@ -25,9 +25,11 @@ class Home extends Component {
 			this.props.onDadosAdded(data.data.acoes);
 		}
 	}
-	handleIcon = event => {
-		let valor = event.currentTarget.getAttribute('data-codigo');
-		console.log(valor);
+	handleIcon = async event => {
+		let codigo = event.currentTarget.getAttribute('data-codigo');
+		await axios.delete(`/acoes/${codigo}`);
+		let acoes = await axios.get('/acoes');
+		this.geraDadosTabela(acoes.data.acoes);
 	};
 	buscaAcoes = async () => {
 		if (!this.props.dados[0]) {
@@ -42,7 +44,7 @@ class Home extends Component {
 	atualizaTabela = async () => {
 		let data = await this.buscaAcoes();
 
-		this.props.onDadosAdded(data);
+		this.props.onDadosAdded(data.data.acoes);
 	};
 
 	clickFecha = () => {
@@ -86,13 +88,16 @@ class Home extends Component {
 		////////////////////////////////////////
 
 		//Calcula o total
-		let total = data.reduce((acc, cV, index) => {
-			if (index === 1) {
-				acc = acc.Investido.vlrTotal;
-			}
+		let total = 0;
+		if (data[0]) {
+			total = data.reduce((acc, cV, index) => {
+				if (index === 1) {
+					acc = acc.Investido.vlrTotal;
+				}
 
-			return acc + cV.Investido.vlrTotal;
-		});
+				return acc + cV.Investido.vlrTotal;
+			});
+		}
 
 		//Empura os valores do Objeto em Array
 		//BODY

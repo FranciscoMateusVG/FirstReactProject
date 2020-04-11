@@ -33,10 +33,12 @@ class AnaliseAcao extends Component {
 		let tabela = this.geraDadosTabela(acao.data.Data);
 		this.setState({ modal: true });
 		this.props.onTabelaAdded(tabela);
+		console.log('ali');
 	}
 
 	async componentDidUpdate(prevProps, prevState) {
 		let acao = await axios.get(`/acoes/${this.state.nomeAcao}`);
+		console.log('aqui');
 
 		if (prevState.modal === false) {
 			let tabela = this.geraDadosTabela(acao.data.Data);
@@ -123,6 +125,11 @@ class AnaliseAcao extends Component {
 					dados: this.state.dados.concat(this.geraDadosTabela([obj]))
 				});
 				this.props.atualizaTabelaPai();
+
+				let acao = await axios.get(`/acoes/${this.state.nomeAcao}`);
+				let tabela = this.geraDadosTabela(acao.data.Data);
+
+				this.props.onTabelaAdded(tabela);
 			} catch (error) {
 				console.log(error);
 			}

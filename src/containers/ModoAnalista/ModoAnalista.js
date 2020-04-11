@@ -23,11 +23,10 @@ class ModoAnalista extends Component {
 	};
 
 	async componentDidMount() {
-		let acoes = this.props.dados;
-		if (!acoes[0]) {
-			acoes = await axios.get('http://localhost:8080/acoes');
-			acoes = acoes.data.acoes;
-		}
+		//let acoes = this.props.dados;
+		let acoes;
+		acoes = await axios.get('http://localhost:8080/acoes');
+		acoes = acoes.data.acoes;
 
 		this.geraDadosTabela(acoes, 0);
 	}
