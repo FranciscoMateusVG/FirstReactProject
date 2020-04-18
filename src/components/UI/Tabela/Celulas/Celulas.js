@@ -3,7 +3,7 @@ import Classes from './Celulas.module.css';
 import { faMinusSquare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-const Celulas = props => {
+const Celulas = (props) => {
 	let celulas = [];
 	if (props.data.length > 0) {
 		let horizontal = {};
@@ -74,6 +74,7 @@ const Celulas = props => {
 						</td>
 					);
 				}
+				return null;
 			});
 
 			if (props.icone && posicao !== qnt) {

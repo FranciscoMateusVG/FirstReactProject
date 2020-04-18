@@ -18,14 +18,14 @@ class AnaliseAcao extends Component {
 			'Data de Compra',
 			'Quantidade',
 			'Preço de Compra',
-			'Valor de Compra'
+			'Valor de Compra',
 		],
 		nomeAcao: this.props.nomeAcao,
 		modal: false,
 		Data: '',
 		Quantidade: '',
 		PrecoDaCompra: '',
-		atualiza: ''
+		atualiza: '',
 	};
 
 	async componentDidMount() {
@@ -33,26 +33,24 @@ class AnaliseAcao extends Component {
 		let tabela = this.geraDadosTabela(acao.data.Data);
 		this.setState({ modal: true });
 		this.props.onTabelaAdded(tabela);
-		console.log('ali');
 	}
 
 	async componentDidUpdate(prevProps, prevState) {
 		let acao = await axios.get(`/acoes/${this.state.nomeAcao}`);
-		console.log('aqui');
 
 		if (prevState.modal === false) {
 			let tabela = this.geraDadosTabela(acao.data.Data);
 
 			this.setState({
 				nomeAcao: this.props.nomeAcao,
-				modal: true
+				modal: true,
 			});
 
 			this.props.onTabelaAdded(tabela);
 		}
 	}
 
-	handleChange = event => {
+	handleChange = (event) => {
 		let nome = event.target.name;
 		let valor = event.target.value;
 		this.setState({ [nome]: valor });
@@ -62,11 +60,11 @@ class AnaliseAcao extends Component {
 		this.setState({ modal: false });
 	};
 
-	geraDadosTabela = data => {
+	geraDadosTabela = (data) => {
 		/////////////////////////////////////////
 		/*Pega as colunas*/
 		let arr2 = [];
-		this.state.colunas.forEach(element => {
+		this.state.colunas.forEach((element) => {
 			arr2.push(new Coluna(element, { tipo: 'Normal' }));
 		});
 
@@ -105,7 +103,7 @@ class AnaliseAcao extends Component {
 			let obj = {
 				data: data,
 				quantidade: quantidade,
-				preco: precoDaCompra
+				preco: precoDaCompra,
 			};
 
 			let settings = {
@@ -113,16 +111,16 @@ class AnaliseAcao extends Component {
 				method: 'PUT',
 				timeout: 0,
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
-				data: JSON.stringify(obj)
+				data: JSON.stringify(obj),
 			};
 
 			try {
 				await axios(settings);
 
 				this.setState({
-					dados: this.state.dados.concat(this.geraDadosTabela([obj]))
+					dados: this.state.dados.concat(this.geraDadosTabela([obj])),
 				});
 				this.props.atualizaTabelaPai();
 
@@ -194,18 +192,18 @@ class AnaliseAcao extends Component {
 	}
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
 	return {
 		tabelaAnaliseAcao: state.tabelaAnaliseAcao,
-		tabelaHome: state.tabelaHome
+		tabelaHome: state.tabelaHome,
 	};
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
 	return {
-		onTabelaAdded: tabela => {
+		onTabelaAdded: (tabela) => {
 			dispatch({ type: actionTypes.ADD_TABELA_ANALISEACAO, tabela: tabela });
-		}
+		},
 	};
 };
 

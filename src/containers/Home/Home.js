@@ -7,15 +7,14 @@ import Aux from '../../hof/Aux/Auxiliar';
 import classes from './Home.module.css';
 import NovaAcao from '../../containers/ModalNovaAcao/NovaAcao';
 import AnaliseAcao from '../../containers/ModalAnaliseAcao/AnaliseAcao';
-import Coluna from '../../components/ObjectsConstructors/Coluna';
-import Celula from '../../components/ObjectsConstructors/Cell';
 import * as actionTypes from '../../store/actions';
+import { geraDadosTabelaHome } from '../../functions/geraTabelas';
 
 class Home extends Component {
 	state = {
 		colunas: ['Código', 'Tipo', 'Setor', 'Distribuiçao', 'Investido'],
 		novaAcao: false,
-		html: ''
+		html: '',
 	};
 
 	async componentDidMount() {
@@ -25,25 +24,22 @@ class Home extends Component {
 			this.props.onDadosAdded(data.data.acoes);
 		}
 	}
-	handleIcon = async event => {
+	handleIcon = async (event) => {
 		let codigo = event.currentTarget.getAttribute('data-codigo');
 		await axios.delete(`/acoes/${codigo}`);
 		let acoes = await axios.get('/acoes');
-		this.geraDadosTabela(acoes.data.acoes);
+		let tabela = geraDadosTabelaHome(acoes.data.acoes, this.state.colunas);
+		this.props.onTabelaAdded(tabela);
 	};
 	buscaAcoes = async () => {
-		if (!this.props.dados[0]) {
-			let acoes = await axios.get('/acoes');
-			this.geraDadosTabela(acoes.data.acoes);
-			return acoes;
-		} else {
-			return this.props.dados;
-		}
+		let acoes = await axios.get('/acoes');
+		let tabela = geraDadosTabelaHome(acoes.data.acoes, this.state.colunas);
+		this.props.onTabelaAdded(tabela);
+		return acoes;
 	};
 
 	atualizaTabela = async () => {
 		let data = await this.buscaAcoes();
-
 		this.props.onDadosAdded(data.data.acoes);
 	};
 
@@ -55,13 +51,12 @@ class Home extends Component {
 		this.setState({ novaAcao: true });
 	};
 
-	abreModalAnaliseAcao = event => {
+	abreModalAnaliseAcao = (event) => {
 		let nomeAcao = event.target.getAttribute('data-codigo');
-		console.log(nomeAcao);
 
 		if (nomeAcao !== 'TOTAL') {
 			this.setState(
-				prevState =>
+				(prevState) =>
 					(prevState.html = (
 						<AnaliseAcao
 							nomeAcao={nomeAcao}
@@ -70,71 +65,6 @@ class Home extends Component {
 					))
 			);
 		}
-	};
-
-	geraDadosTabela = data => {
-		let formatter = new Intl.NumberFormat('pt-BR', {
-			style: 'currency',
-			currency: 'BRL'
-		});
-		/////////////////////////////////////////
-		/*Pega as colunas*/
-		let arr2 = [];
-		let totalInvestido = 0;
-		this.state.colunas.forEach(element => {
-			arr2.push(new Coluna(element, { tipo: 'Normal' }));
-		});
-
-		////////////////////////////////////////
-
-		//Calcula o total
-		let total = 0;
-		if (data[0]) {
-			total = data.reduce((acc, cV, index) => {
-				if (index === 1) {
-					acc = acc.Investido.vlrTotal;
-				}
-
-				return acc + cV.Investido.vlrTotal;
-			});
-		}
-
-		//Empura os valores do Objeto em Array
-		//BODY
-		data.forEach((value, index) => {
-			let distribuicao = Math.round((value.Investido.vlrTotal / total) * 100);
-
-			let investido = value.Investido.vlrTotal;
-
-			let key = index + 1;
-			arr2[0][key] = new Celula(value.Codigo, null);
-			arr2[1][key] = new Celula(value.Tipo, null);
-			arr2[2][key] = new Celula(value.Setor, null);
-			arr2[3][key] = new Celula(`${distribuicao} %`, null);
-			arr2[4][key] = new Celula(formatter.format(investido), null);
-
-			totalInvestido += investido;
-		});
-
-		//O FOOTER FICA AQUI MATEUS NÃO SE ESQUECÃ
-
-		let key = Object.keys(arr2[0]).length - 1;
-
-		arr2[0][key] = new Celula('TOTAL', {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-		arr2[1][key] = new Celula('', { backgroundColor: 'black' });
-		arr2[2][key] = new Celula('', { backgroundColor: 'black' });
-		arr2[3][key] = new Celula('', { backgroundColor: 'black' });
-		arr2[4][key] = new Celula(formatter.format(totalInvestido), {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-
-		//////////////////////////////////////////////
-
-		this.props.onTabelaAdded(arr2);
 	};
 
 	render() {
@@ -150,7 +80,7 @@ class Home extends Component {
 					colunas={this.props.tabela}
 					data={this.props.tabela}
 					clicked={this.abreModalAnaliseAcao}
-					icone={event => this.handleIcon(event)}
+					icone={(event) => this.handleIcon(event)}
 				/>
 				{this.state.html}
 				<div className={classes.Teste}>
@@ -163,21 +93,21 @@ class Home extends Component {
 	}
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
 	return {
 		dados: state.dados,
-		tabela: state.tabelaHome
+		tabela: state.tabelaHome,
 	};
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
 	return {
-		onDadosAdded: dados => {
+		onDadosAdded: (dados) => {
 			dispatch({ type: actionTypes.ADD_DADOS, dados: dados });
 		},
-		onTabelaAdded: tabela => {
+		onTabelaAdded: (tabela) => {
 			dispatch({ type: actionTypes.ADD_TABELA_HOME, tabela: tabela });
-		}
+		},
 	};
 };
 

@@ -4,9 +4,11 @@ import Aux from '../../hof/Aux/Auxiliar';
 import Button from '../../components/UI/Button/Button';
 import Input from '../../components/UI/Input/Input';
 import axios from 'axios';
-import Coluna from '../../components/ObjectsConstructors/Coluna';
-import Celula from '../../components/ObjectsConstructors/Cell';
 import * as actionTypes from '../../store/actions';
+import {
+	geraDadosTabelaModoAnalista,
+	geraDadosTabelaHome,
+} from '../../functions/geraTabelas';
 
 class NovaAcao extends Component {
 	state = {
@@ -14,10 +16,10 @@ class NovaAcao extends Component {
 		Nome: '',
 		Tipo: 'Ação',
 		Codigo: '',
-		Setor: ''
+		Setor: '',
 	};
 
-	handleChange = event => {
+	handleChange = (event) => {
 		let nome = event.target.name;
 		let valor = event.target.value;
 		this.setState({ [nome]: valor });
@@ -29,178 +31,43 @@ class NovaAcao extends Component {
 			method: 'POST',
 			timeout: 0,
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
 			},
-			data: JSON.stringify(this.state)
+			data: JSON.stringify(this.state),
 		};
 
 		try {
 			await axios(settings);
 			let acoes = await axios.get('/acoes');
-			this.geraDadosTabelaHome(acoes.data.acoes);
-			this.geraDadosTabelaModoAnalista(acoes.data.acoes);
+
+			//!Tabela Home
+			let novaTabelaHome = geraDadosTabelaHome(
+				acoes.data.acoes,
+				this.state.colunas
+			);
+
+			this.props.onTabelaAddedHome(novaTabelaHome);
+
+			//!Tabela Modo Analista
+			let novaTabelaModoAnalista = geraDadosTabelaModoAnalista(
+				acoes.data.acoes,
+				0,
+				[
+					'Nome da Ação',
+					'Total de Ações',
+					'Preço Médio',
+					'Valor Patrimonial',
+					'Preço De Mercado Hoje',
+					'Valor Patrimonial de Mercado',
+					'Valorização Patrimonial em R$',
+					'Valorização Patrimonial em %',
+				]
+			);
+
+			this.props.onTabelaAddedModoAnalista(novaTabelaModoAnalista);
 		} catch (error) {
 			console.log(error);
 		}
-	};
-	geraDadosTabelaHome = data => {
-		let formatter = new Intl.NumberFormat('pt-BR', {
-			style: 'currency',
-			currency: 'BRL'
-		});
-		/////////////////////////////////////////
-		/*Pega as colunas*/
-		let arr2 = [];
-		let totalInvestido = 0;
-		this.state.colunas.forEach(element => {
-			arr2.push(new Coluna(element, { tipo: 'Normal' }));
-		});
-
-		////////////////////////////////////////
-
-		//Calcula o total
-		let total = 0;
-		if (data[0]) {
-			total = data.reduce((acc, cV, index) => {
-				if (index === 1) {
-					acc = acc.Investido.vlrTotal;
-				}
-
-				return acc + cV.Investido.vlrTotal;
-			});
-		}
-
-		//Empura os valores do Objeto em Array
-		//BODY
-		data.forEach((value, index) => {
-			let distribuicao = Math.round((value.Investido.vlrTotal / total) * 100);
-
-			let investido = value.Investido.vlrTotal;
-
-			let key = index + 1;
-			arr2[0][key] = new Celula(value.Codigo, null);
-			arr2[1][key] = new Celula(value.Tipo, null);
-			arr2[2][key] = new Celula(value.Setor, null);
-			arr2[3][key] = new Celula(`${distribuicao} %`, null);
-			arr2[4][key] = new Celula(formatter.format(investido), null);
-
-			totalInvestido += investido;
-		});
-
-		//O FOOTER FICA AQUI MATEUS NÃO SE ESQUECÃ
-
-		let key = Object.keys(arr2[0]).length - 1;
-
-		arr2[0][key] = new Celula('TOTAL', {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-		arr2[1][key] = new Celula('', { backgroundColor: 'black' });
-		arr2[2][key] = new Celula('', { backgroundColor: 'black' });
-		arr2[3][key] = new Celula('', { backgroundColor: 'black' });
-		arr2[4][key] = new Celula(formatter.format(totalInvestido), {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-
-		//////////////////////////////////////////////
-
-		this.props.onTabelaAddedHome(arr2);
-	};
-
-	geraDadosTabelaModoAnalista = (data, precoDeMercadoHoje) => {
-		let formatter = new Intl.NumberFormat('pt-BR', {
-			style: 'currency',
-			currency: 'BRL'
-		});
-		let totalDeAcoes = 0;
-		let totalValorPatrimonial = 0;
-		let totalValorPatrimonialDeMercado = 0;
-		let totalValorizacaoPatrimonialRS = 0;
-		let totalValorizacaoPatrimonialPer = 0;
-		/////////////////////////////////////////
-		/*Pega as colunas*/
-		let arr2 = [];
-		this.state.colunas.forEach(element => {
-			if (element === 'Preço De Mercado Hoje') {
-				arr2.push(new Coluna(element, { tipo: 'Input', funcao: this.handleBlur }));
-			} else {
-				arr2.push(new Coluna(element, { tipo: 'Normal' }));
-			}
-		});
-
-		////////////////////////////////////////
-
-		//Empura os valores do Objeto em Array
-		//BODY
-		data.forEach((value, index) => {
-			let valorPatrimonial = value.Investido.qntTotal * value.Investido.precoMedio;
-			totalDeAcoes += value.Investido.qntTotal;
-			totalValorPatrimonial += valorPatrimonial;
-			let valorPatrimonialDeMercado =
-				value.Investido.qntTotal * precoDeMercadoHoje;
-
-			totalValorPatrimonialDeMercado += valorPatrimonialDeMercado;
-
-			let valorizacaoPatrimonialRS =
-				parseFloat(valorPatrimonialDeMercado) - parseFloat(valorPatrimonial);
-			let valorizacaoPatrimonialPer = valorizacaoPatrimonialRS / valorPatrimonial;
-			totalValorizacaoPatrimonialPer += valorizacaoPatrimonialPer;
-			totalValorizacaoPatrimonialRS += valorizacaoPatrimonialRS;
-			let color = 'red';
-			if (valorizacaoPatrimonialRS > 0) {
-				color = 'blue';
-			}
-
-			let key = index + 1;
-			arr2[0][key] = new Celula(value.Nome, null);
-			arr2[1][key] = new Celula(value.Investido.qntTotal, null);
-			arr2[2][key] = new Celula(
-				formatter.format(value.Investido.precoMedio),
-				null
-			);
-			arr2[3][key] = new Celula(formatter.format(valorPatrimonial), null);
-			arr2[4][key] = new Celula(formatter.format(precoDeMercadoHoje), null);
-			arr2[5][key] = new Celula(formatter.format(valorPatrimonialDeMercado), null);
-			arr2[6][key] = new Celula(formatter.format(valorizacaoPatrimonialRS), {
-				color: color
-			});
-			arr2[7][key] = new Celula(`${valorizacaoPatrimonialPer.toFixed(2)}  %`, {
-				color: color
-			});
-		});
-
-		//O FOOTER FICA AQUI MATEUS NÃO SE ESQUEÇA
-		let key = Object.keys(arr2[0]).length - 1;
-
-		arr2[0][key] = new Celula('TOTAL', {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-		arr2[1][key] = new Celula(totalDeAcoes, {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-		arr2[2][key] = new Celula('', { backgroundColor: 'black' });
-		arr2[3][key] = new Celula(formatter.format(totalValorPatrimonial), {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-		arr2[4][key] = new Celula('', { backgroundColor: 'black' });
-		arr2[5][key] = new Celula(formatter.format(totalValorPatrimonialDeMercado), {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-		arr2[6][key] = new Celula(formatter.format(totalValorizacaoPatrimonialRS), {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-		arr2[7][key] = new Celula(`${totalValorizacaoPatrimonialPer.toFixed(2)} %`, {
-			backgroundColor: 'black',
-			color: 'white'
-		});
-
-		this.props.onTabelaAddedModoAnalista(arr2);
 	};
 
 	render() {
@@ -259,16 +126,22 @@ class NovaAcao extends Component {
 	}
 }
 
-const mapDispatchToProps = dispatch => {
-	console.log('despachado');
+const mapStateToProps = (state) => {
 	return {
-		onTabelaAddedHome: tabela => {
-			dispatch({ type: actionTypes.ADD_TABELA_HOME, tabela: tabela });
-		},
-		onTabelaAddedModoAnalista: tabela => {
-			dispatch({ type: actionTypes.ADD_TABELA_MODOANALISTA, tabela: tabela });
-		}
+		dados: state.dados,
+		tabelaModoAnalista: state.tabelaModoAnalista,
 	};
 };
 
-export default connect(null, mapDispatchToProps)(NovaAcao);
+const mapDispatchToProps = (dispatch) => {
+	return {
+		onTabelaAddedHome: (tabela) => {
+			dispatch({ type: actionTypes.ADD_TABELA_HOME, tabela: tabela });
+		},
+		onTabelaAddedModoAnalista: (tabela) => {
+			dispatch({ type: actionTypes.ADD_TABELA_MODOANALISTA, tabela: tabela });
+		},
+	};
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(NovaAcao);
