@@ -1,210 +1,83 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import Tabela from '../../components/UI/Tabela/Tabela';
-import Modal from '../../components/UI/Modal/Modal';
-import axios from 'axios';
-import Input from '../../components/UI/Input/Input';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import classes from './AnaliseAcao.module.css';
-import Coluna from '../../components/ObjectsConstructors/Coluna';
-import Celula from '../../components/ObjectsConstructors/Cell';
-import * as actionTypes from '../../store/actions';
+import React, { useState, useCallback, useEffect } from "react";
+import Tabela from "../../components/UI/Tabela/Tabela";
+import Modal from "../../components/UI/Modal/Modal";
+import Forms from "../../components/UI/Forms/Forms";
+import Icone from "../../components/UI/Icones/Icones";
+import useHttp from "../../hooks/http";
 
-class AnaliseAcao extends Component {
-	state = {
-		dados: '',
-		colunas: [
-			'Data de Compra',
-			'Quantidade',
-			'Preço de Compra',
-			'Valor de Compra',
-		],
-		nomeAcao: this.props.nomeAcao,
-		modal: false,
-		Data: '',
-		Quantidade: '',
-		PrecoDaCompra: '',
-		atualiza: '',
-	};
+const AnaliseAcao = (props) => {
+  const { sendRequest, tabelaAnaliseAcao } = useHttp();
+  //Estado
+  const [inputs] = useState([
+    { label: "Data", type: "date", placeholder: "Data Da Compra", options: "" },
+    {
+      label: "Quantidade",
+      type: "number",
+      placeholder: "Quantidade Comprada",
+      options: "",
+    },
+    {
+      label: "Preço da Compra",
+      type: "text",
+      placeholder: "Preço Unirtário da Compra",
+      options: "",
+    },
+  ]);
+  const [nomeAcao] = useState(props.nomeAcao);
+  const [modal] = useState(props.show);
 
-	async componentDidMount() {
-		let acao = await axios.get(`/acoes/${this.state.nomeAcao}`);
-		let tabela = this.geraDadosTabela(acao.data.Data);
-		this.setState({ modal: true });
-		this.props.onTabelaAdded(tabela);
-	}
+  const [data, setData] = useState("");
+  const [quantidade, setQuantidade] = useState("");
+  const [precoDaCompra, setPrecoDaCompra] = useState("");
 
-	async componentDidUpdate(prevProps, prevState) {
-		let acao = await axios.get(`/acoes/${this.state.nomeAcao}`);
+  //Funções
+  const funcoes = {
+    Data: setData,
+    Quantidade: setQuantidade,
+    PrecoDaCompra: setPrecoDaCompra,
+  };
 
-		if (prevState.modal === false) {
-			let tabela = this.geraDadosTabela(acao.data.Data);
+  const clickFecha = () => {
+    props.clearHtml();
+  };
 
-			this.setState({
-				nomeAcao: this.props.nomeAcao,
-				modal: true,
-			});
+  const adicionaAcao = async () => {
+    if (data && quantidade && precoDaCompra) {
+      setPrecoDaCompra(precoDaCompra.replace(",", "."));
+      setData(data + "T00:00:00.000Z");
 
-			this.props.onTabelaAdded(tabela);
-		}
-	}
+      let dadosNovaAcao = {
+        data: data,
+        quantidade: quantidade,
+        preco: precoDaCompra,
+      };
 
-	handleChange = (event) => {
-		let nome = event.target.name;
-		let valor = event.target.value;
-		this.setState({ [nome]: valor });
-	};
+      sendRequest(`/acoes/${nomeAcao}`, "PUT", dadosNovaAcao, ["analise"]);
+    } else alert("PREENCHA TODOS OS CAMPOS");
+  };
 
-	clickFecha = () => {
-		this.setState({ modal: false });
-	};
+  const fetchData = useCallback(() => {
+    sendRequest(`/acoes/${nomeAcao}`, "GET", null, ["analise"]);
+  }, [sendRequest, nomeAcao]);
 
-	geraDadosTabela = (data) => {
-		/////////////////////////////////////////
-		/*Pega as colunas*/
-		let arr2 = [];
-		this.state.colunas.forEach((element) => {
-			arr2.push(new Coluna(element, { tipo: 'Normal' }));
-		});
+  //Did Mount
 
-		////////////////////////////////////////
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-		//Empura os valores do Objeto em Array
-		//BODY
-		data.forEach((value, index) => {
-			let valorDeCompra = value.quantidade * value.preco;
-			let data = value.data.slice(0, 10).split('-');
-			data = `${data[2]} / ${data[1]} / ${data[0]}`;
+  return (
+    <Modal
+      header={"Detalhes Ação:  " + nomeAcao}
+      show={modal}
+      clicked={clickFecha}
+    >
+      <Tabela colunas={tabelaAnaliseAcao} data={tabelaAnaliseAcao}></Tabela>
 
-			let key = index + 1;
-			arr2[0][key] = new Celula(data, null);
-			arr2[1][key] = new Celula(parseInt(value.quantidade), null);
-			arr2[2][key] = new Celula(parseFloat(value.preco), null);
-			arr2[3][key] = new Celula(valorDeCompra, null);
-		});
-
-		//O FOOTER FICA AQUI MATEUS NÃO SE ESQUECÃ
-
-		return arr2;
-
-		//		this.props.onTabelaAdded(arr2);
-	};
-
-	adicionaAcao = async () => {
-		let data = this.state.Data,
-			quantidade = this.state.Quantidade,
-			precoDaCompra = this.state.PrecoDaCompra;
-
-		if (data && quantidade && precoDaCompra) {
-			precoDaCompra = precoDaCompra.replace(',', '.');
-			data = data + 'T00:00:00.000Z';
-
-			let obj = {
-				data: data,
-				quantidade: quantidade,
-				preco: precoDaCompra,
-			};
-
-			let settings = {
-				url: `/acoes/${this.state.nomeAcao}`,
-				method: 'PUT',
-				timeout: 0,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				data: JSON.stringify(obj),
-			};
-
-			try {
-				await axios(settings);
-
-				this.setState({
-					dados: this.state.dados.concat(this.geraDadosTabela([obj])),
-				});
-				this.props.atualizaTabelaPai();
-
-				let acao = await axios.get(`/acoes/${this.state.nomeAcao}`);
-				let tabela = this.geraDadosTabela(acao.data.Data);
-
-				this.props.onTabelaAdded(tabela);
-			} catch (error) {
-				console.log(error);
-			}
-		} else alert('PREENCHA TODOS OS CAMPOS');
-	};
-
-	render() {
-		return (
-			<Modal
-				header={'Detalhes Ação:  ' + this.state.nomeAcao}
-				show={this.state.modal}
-				clicked={this.clickFecha}>
-				<div className={classes.Modal}>
-					<Tabela
-						colunas={this.props.tabelaAnaliseAcao}
-						data={this.props.tabelaAnaliseAcao}></Tabela>
-					<div className={classes.Caixa} id='div-caixa'>
-						<form className={classes.Form}>
-							<Input
-								label='Data'
-								type='date'
-								name='Data'
-								id='data'
-								placeholder='Data da Compra'
-								aria-describedby='helpId'
-								value={this.state.nome}
-								onChange={this.handleChange}
-							/>
-							<Input
-								label='Quantidade'
-								type='number'
-								name='Quantidade'
-								id='quantidade'
-								placeholder='Quantidade Comprada'
-								aria-describedby='helpId'
-								value={this.state.codigo}
-								onChange={this.handleChange}
-							/>
-							<Input
-								label='Preço Da Compra'
-								type='text'
-								name='PrecoDaCompra'
-								id='precoDaCompra'
-								placeholder='Preço Unitario da Compra'
-								aria-describedby='helpId'
-								value={this.state.setor}
-								onChange={this.handleChange}
-							/>
-							<div className={classes.IconeBox} id='icone'>
-								<FontAwesomeIcon
-									onClick={this.adicionaAcao}
-									icon={faPlus}
-									size='2x'
-									className={classes.Icone}
-								/>
-							</div>
-						</form>
-					</div>
-				</div>
-			</Modal>
-		);
-	}
-}
-
-const mapStateToProps = (state) => {
-	return {
-		tabelaAnaliseAcao: state.tabelaAnaliseAcao,
-		tabelaHome: state.tabelaHome,
-	};
+      <Forms {...inputs} funcoes={funcoes} />
+      <Icone clickfunction={adicionaAcao} icon="faPlus" size="2x" />
+    </Modal>
+  );
 };
 
-const mapDispatchToProps = (dispatch) => {
-	return {
-		onTabelaAdded: (tabela) => {
-			dispatch({ type: actionTypes.ADD_TABELA_ANALISEACAO, tabela: tabela });
-		},
-	};
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(AnaliseAcao);
+export default AnaliseAcao;

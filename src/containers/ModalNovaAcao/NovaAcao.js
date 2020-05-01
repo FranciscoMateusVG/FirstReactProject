@@ -1,147 +1,62 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import Aux from '../../hof/Aux/Auxiliar';
-import Button from '../../components/UI/Button/Button';
-import Input from '../../components/UI/Input/Input';
-import axios from 'axios';
-import * as actionTypes from '../../store/actions';
-import {
-	geraDadosTabelaModoAnalista,
-	geraDadosTabelaHome,
-} from '../../functions/geraTabelas';
+import React, { useState } from "react";
+import Aux from "../../hof/Aux/Auxiliar";
+import Button from "../../components/UI/Button/Button";
+import Forms from "../../components/UI/Forms/Forms";
+import useHttp from "../../hooks/http";
 
-class NovaAcao extends Component {
-	state = {
-		colunas: ['Código', 'Tipo', 'Setor', 'Distribuiçao', 'Investido'],
-		Nome: '',
-		Tipo: 'Ação',
-		Codigo: '',
-		Setor: '',
-	};
+const NovaAcao = () => {
+  //Estado
+  const { sendRequest } = useHttp();
+  const [inputs] = useState([
+    { label: "Nome", type: "text", placeholder: "Nome Da Ação", options: "" },
+    {
+      label: "Codigo",
+      type: "text",
+      placeholder: "Código Da Ação",
+      options: "",
+    },
+    { label: "Setor", type: "text", placeholder: "Setor Da Ação", options: "" },
+    {
+      label: "Nome",
+      type: "select",
+      placeholder: "Nome Da Ação",
+      options: ["Ação", "Fundo Imobiliário"],
+    },
+  ]);
+  const [nome, setNome] = useState("");
+  const [tipo, setTipo] = useState("Ação");
+  const [codigo, setCodigo] = useState("");
+  const [setor, setSetor] = useState("");
 
-	handleChange = (event) => {
-		let nome = event.target.name;
-		let valor = event.target.value;
-		this.setState({ [nome]: valor });
-	};
+  //Funções
+  const funcoes = {
+    Nome: setNome,
+    Codigo: setCodigo,
+    Tipo: setTipo,
+    Setor: setSetor,
+  };
 
-	clickSalva = async () => {
-		let settings = {
-			url: '/acoes',
-			method: 'POST',
-			timeout: 0,
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			data: JSON.stringify(this.state),
-		};
+  const clickSalva = async () => {
+    let acaoSalva = {
+      Nome: nome,
+      Tipo: tipo,
+      Codigo: codigo,
+      Setor: setor,
+    };
 
-		try {
-			await axios(settings);
-			let acoes = await axios.get('/acoes');
+    sendRequest("/acoes", "POST", acaoSalva, ["home", "analista"]);
+  };
+  //Did mount
 
-			//!Tabela Home
-			let novaTabelaHome = geraDadosTabelaHome(
-				acoes.data.acoes,
-				this.state.colunas
-			);
-
-			this.props.onTabelaAddedHome(novaTabelaHome);
-
-			//!Tabela Modo Analista
-			let novaTabelaModoAnalista = geraDadosTabelaModoAnalista(
-				acoes.data.acoes,
-				0,
-				[
-					'Nome da Ação',
-					'Total de Ações',
-					'Preço Médio',
-					'Valor Patrimonial',
-					'Preço De Mercado Hoje',
-					'Valor Patrimonial de Mercado',
-					'Valorização Patrimonial em R$',
-					'Valorização Patrimonial em %',
-				]
-			);
-
-			this.props.onTabelaAddedModoAnalista(novaTabelaModoAnalista);
-		} catch (error) {
-			console.log(error);
-		}
-	};
-
-	render() {
-		return (
-			<Aux>
-				<form>
-					<Input
-						label='Nome'
-						type='text'
-						name='Nome'
-						id='nomeAcao'
-						placeholder='Nome da Açao'
-						aria-describedby='helpId'
-						value={this.state.nome}
-						onChange={this.handleChange}
-					/>
-
-					<Input
-						label='Código'
-						type='text'
-						name='Codigo'
-						id='codigoAcao'
-						placeholder='Codigo da Açao'
-						aria-describedby='helpId'
-						value={this.state.codigo}
-						onChange={this.handleChange}
-					/>
-					<Input
-						label='Setor'
-						type='text'
-						name='Setor'
-						id='setorAcao'
-						placeholder='Setor da Açao'
-						aria-describedby='helpId'
-						value={this.state.setor}
-						onChange={this.handleChange}
-					/>
-
-					<Input
-						inputtype='select'
-						label='Tipo'
-						options={['Ação', 'Fundo Imobiliário']}
-						name='Tipo'
-						id='tipoAcao'
-						value={this.state.tipoAcao}
-						onChange={this.handleChange}
-					/>
-				</form>
-
-				<Button btnType='Success'>Cancelar</Button>
-				<Button btnType='Danger' clicked={this.clickSalva}>
-					Salvar
-				</Button>
-			</Aux>
-		);
-	}
-}
-
-const mapStateToProps = (state) => {
-	return {
-		dados: state.dados,
-		tabelaModoAnalista: state.tabelaModoAnalista,
-	};
+  return (
+    <Aux>
+      <Forms {...inputs} funcoes={funcoes} />
+      <Button btnType="Success">Cancelar</Button>
+      <Button btnType="Danger" clicked={clickSalva}>
+        Salvar
+      </Button>
+    </Aux>
+  );
 };
 
-const mapDispatchToProps = (dispatch) => {
-	return {
-		onTabelaAddedHome: (tabela) => {
-			dispatch({ type: actionTypes.ADD_TABELA_HOME, tabela: tabela });
-		},
-		onTabelaAddedModoAnalista: (tabela) => {
-			dispatch({ type: actionTypes.ADD_TABELA_MODOANALISTA, tabela: tabela });
-		},
-	};
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(NovaAcao);
+export default NovaAcao;

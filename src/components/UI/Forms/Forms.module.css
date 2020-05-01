@@ -1,0 +1,7 @@
+.Form {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: left;
+  text-align: left;
+  padding-top: 30px;
+}

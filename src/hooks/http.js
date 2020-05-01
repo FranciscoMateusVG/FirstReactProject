@@ -1,0 +1,116 @@
+import axios from "axios";
+import { useCallback } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  addDados,
+  addTabelaHome,
+  addTabelaAnaliseAcao,
+  addTabelaModoAnalista,
+} from "../store/actions/tabelas";
+import {
+  geraDadosTabelaModoAnalista,
+  geraDadosTabelaHome,
+  geraDadosTabelaAnaliseAcao,
+} from "../functions/geraTabelas";
+
+const useHttp = () => {
+  //Seletores
+  const dados = useSelector((state) => state.dados);
+  const tabelaHome = useSelector((state) => state.tabelaHome);
+  const tabelaModoAnalista = useSelector((state) => state.tabelaModoAnalista);
+  const tabelaAnaliseAcao = useSelector((state) => state.tabelaAnaliseAcao);
+
+  //Despachantes
+  const dispatch = useDispatch();
+  const onDadosAdded = useCallback((dados) => dispatch(addDados(dados)), [
+    dispatch,
+  ]);
+  const onTabelaAddedHome = useCallback(
+    (tabela) => dispatch(addTabelaHome(tabela)),
+    [dispatch]
+  );
+  const onTabelaAddedModoAnalista = useCallback(
+    (tabela) => dispatch(addTabelaModoAnalista(tabela)),
+    [dispatch]
+  );
+  const onTabelaAddedAnaliseAcao = useCallback(
+    (tabela) => dispatch(addTabelaAnaliseAcao(tabela)),
+    [dispatch]
+  );
+
+  const sendRequest = useCallback(
+    async (url, method, data, despachantes) => {
+      try {
+        let settings = {
+          url: url,
+          method: method,
+          timeout: 0,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          data: JSON.stringify(data),
+        };
+
+        await axios(settings);
+
+        if (despachantes[0]) {
+          let acoes;
+
+          for (let index = 0; index < despachantes.length; index++) {
+            const despachante = despachantes[index];
+
+            switch (despachante) {
+              case "dados":
+                acoes = await axios.get("/acoes");
+                onDadosAdded(acoes.data.acoes);
+                break;
+              case "home":
+                acoes = await axios.get("/acoes");
+                let novaTabelaHome = geraDadosTabelaHome(acoes.data.acoes);
+                onTabelaAddedHome(novaTabelaHome);
+                break;
+              case "analista":
+                acoes = await axios.get("/acoes");
+                let novaTabelaModoAnalista = geraDadosTabelaModoAnalista(
+                  acoes.data.acoes,
+                  0
+                );
+                onTabelaAddedModoAnalista(novaTabelaModoAnalista);
+                break;
+              case "analise":
+                acoes = await axios.get(url);
+
+                let novaTabelaAnaliseAcao = geraDadosTabelaAnaliseAcao(
+                  acoes.data.Data
+                );
+                onTabelaAddedAnaliseAcao(novaTabelaAnaliseAcao);
+                break;
+
+              default:
+                console.log("Despachante desconhecido");
+                break;
+            }
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [
+      onTabelaAddedAnaliseAcao,
+      onTabelaAddedHome,
+      onDadosAdded,
+      onTabelaAddedModoAnalista,
+    ]
+  );
+
+  return {
+    sendRequest,
+    dados,
+    tabelaHome,
+    tabelaAnaliseAcao,
+    tabelaModoAnalista,
+  };
+};
+
+export default useHttp;
