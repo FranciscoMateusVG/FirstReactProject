@@ -1,19 +1,21 @@
 import axios from "axios";
 import { useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
+
 import {
   addDados,
   addTabelaHome,
   addTabelaAnaliseAcao,
   addTabelaModoAnalista,
 } from "../store/actions/tabelas";
-import {
-  geraDadosTabelaModoAnalista,
-  geraDadosTabelaHome,
-  geraDadosTabelaAnaliseAcao,
-} from "../functions/geraTabelas";
+import useGeraTabelas from "./geraTabelas";
 
 const useHttp = () => {
+  const {
+    geraDadosTabelaModoAnalista,
+    geraDadosTabelaHome,
+    geraDadosTabelaAnaliseAcao,
+  } = useGeraTabelas();
   //Seletores
   const dados = useSelector((state) => state.dados);
   const tabelaHome = useSelector((state) => state.tabelaHome);
@@ -41,36 +43,34 @@ const useHttp = () => {
   const sendRequest = useCallback(
     async (url, method, data, despachantes) => {
       try {
-        let settings = {
-          url: url,
-          method: method,
-          timeout: 0,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          data: JSON.stringify(data),
-        };
-
-        await axios(settings);
+        if (url && (method !== "GET" || method !== "get")) {
+          let settings = {
+            url: url,
+            method: method,
+            timeout: 0,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            data: JSON.stringify(data),
+          };
+          await axios(settings);
+        }
 
         if (despachantes[0]) {
-          let acoes;
+          let acoes = await axios.get("/acoes");
 
           for (let index = 0; index < despachantes.length; index++) {
             const despachante = despachantes[index];
 
             switch (despachante) {
               case "dados":
-                acoes = await axios.get("/acoes");
                 onDadosAdded(acoes.data.acoes);
                 break;
               case "home":
-                acoes = await axios.get("/acoes");
                 let novaTabelaHome = geraDadosTabelaHome(acoes.data.acoes);
                 onTabelaAddedHome(novaTabelaHome);
                 break;
               case "analista":
-                acoes = await axios.get("/acoes");
                 let novaTabelaModoAnalista = geraDadosTabelaModoAnalista(
                   acoes.data.acoes,
                   0
@@ -101,6 +101,9 @@ const useHttp = () => {
       onTabelaAddedHome,
       onDadosAdded,
       onTabelaAddedModoAnalista,
+      geraDadosTabelaModoAnalista,
+      geraDadosTabelaHome,
+      geraDadosTabelaAnaliseAcao,
     ]
   );
 
