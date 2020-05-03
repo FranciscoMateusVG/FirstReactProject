@@ -48,8 +48,10 @@ const Home = () => {
 
   //Did mount
   useEffect(() => {
-    sendRequest("/acoes", "GET", null, ["home"]);
-  }, [sendRequest]);
+    if (!tabelaHome[0]) {
+      sendRequest("/acoes", "GET", null, ["home"]);
+    }
+  }, [sendRequest, tabelaHome]);
 
   return (
     <Aux>
